@@ -440,9 +440,9 @@ function renderTabela() {
         renderMonitoramentoVendedor();
     }
     
-    // Atualiza indicadores caso a aba PCP indicadores esteja ativa
-    const tabIndicadores = document.getElementById("abaPcpIndicadores");
-    if (tabIndicadores && !tabIndicadores.classList.contains("hidden")) {
+    // Atualiza indicadores caso a página PCP Indicadores esteja ativa
+    const pageIndicadores = document.getElementById("indicadoresPcpPage");
+    if (pageIndicadores && pageIndicadores.classList.contains("active")) {
         renderizarIndicadoresPcp();
     }
 }
@@ -483,7 +483,6 @@ function abrirModal(docId) {
     document.getElementById("dataRetornoPcp").value = item.dataRetornoPcp !== "-" ? item.dataRetornoPcp : "";
     document.getElementById("novoStatus").value = item.status || "PENDENTE";
     
-    mudarAbaPcp('solicitacoes');
     document.getElementById("modalResposta").style.display = "flex";
 }
 
@@ -496,7 +495,6 @@ function abrirModalMassa() {
     document.getElementById("responsavelPcp").value = "";
     document.getElementById("respostaTexto").value = "";
     
-    mudarAbaPcp('solicitacoes');
     document.getElementById("modalResposta").style.display = "flex";
 }
 
@@ -542,32 +540,8 @@ async function salvarResposta() {
 }
 
 /* ==========================================================================
-   NOVA FUNCIONALIDADE: NAVEGAÇÃO E INDICADORES PCP
+   NOVA FUNCIONALIDADE: INDICADORES PCP MOVIDA PARA PÁGINA PRINCIPAL
    ========================================================================== */
-function mudarAbaPcp(aba) {
-    const tabSol = document.getElementById("abaPcpSolicitacoes");
-    const tabInd = document.getElementById("abaPcpIndicadores");
-    const btns = document.querySelectorAll(".tabs-pcp .tab-btn-pcp");
-    const modalContent = document.getElementById("modalPcpContent");
-    
-    if (!tabSol || !tabInd) return;
-
-    btns.forEach(b => b.classList.remove("active"));
-
-    if (aba === 'solicitacoes') {
-        tabSol.classList.remove("hidden");
-        tabInd.classList.add("hidden");
-        btns[0].classList.add("active");
-        modalContent.classList.remove("modal-lg");
-    } else {
-        tabSol.classList.add("hidden");
-        tabInd.classList.remove("hidden");
-        btns[1].classList.add("active");
-        modalContent.classList.add("modal-lg");
-        renderizarIndicadoresPcp(); // Carrega gráficos dinamicamente
-    }
-}
-
 function renderizarIndicadoresPcp() {
     const hojeStr = new Date().toLocaleDateString("pt-BR");
     
@@ -797,5 +771,4 @@ window.gerenciarSelecaoItem = (c) => {
 window.mudarAbaVendedor = mudarAbaVendedor;
 window.renderMonitoramentoVendedor = renderMonitoramentoVendedor;
 
-window.mudarAbaPcp = mudarAbaPcp;
 window.renderizarIndicadoresPcp = renderizarIndicadoresPcp;

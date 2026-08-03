@@ -13,7 +13,6 @@
     
     <link rel="stylesheet" href="style.css">
 
-    <!-- Bibliotecas Externas -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.6.0/dist/jspdf.plugin.autotable.min.js"></script>
@@ -92,6 +91,9 @@
                 <nav class="menu">
                     <button class="active" onclick="abrirPagina('solicitacoes', this)">
                         <i class="fa-solid fa-table-columns"></i> Painel de Controle
+                    </button>
+                    <button id="menuIndicadores" class="hidden id-pcp-view" onclick="abrirPagina('indicadoresPcpPage', this); renderizarIndicadoresPcp();">
+                        <i class="fa-solid fa-chart-pie"></i> Indicadores
                     </button>
                     <button onclick="abrirPagina('exportacoes', this)">
                         <i class="fa-solid fa-file-export"></i> Exportações
@@ -172,13 +174,11 @@
 
                     <div class="form-box hidden" id="formSolicitante">
                         
-                        <!-- ABAS DE NAVEGAÇÃO DO VENDEDOR -->
                         <div class="tabs-vendedor">
                             <button class="tab-btn active" onclick="mudarAbaVendedor('nova')">Nova Solicitação</button>
                             <button class="tab-btn" onclick="mudarAbaVendedor('monitorar')">Monitorar Solicitações</button>
                         </div>
                         
-                        <!-- TELA 1: NOVA SOLICITAÇÃO (Mantida exatamente como original) -->
                         <div id="abaNovaSolicitacao">
                             <div class="section-title">Nova Solicitação MTO</div>
                             
@@ -292,7 +292,6 @@
                             <button class="send-btn" id="btnEnviarSol" onclick="enviarSolicitacaoMultiiens()">ENVIAR PEDIDO COMPLETO</button>
                         </div>
                         
-                        <!-- TELA 2: MONITORAR SOLICITAÇÕES (Nova Interface) -->
                         <div id="abaMonitorarSolicitacoes" class="hidden">
                             <div class="section-title">Monitorar Solicitações</div>
                             
@@ -336,8 +335,6 @@
 
                     <div class="actions">
                         <input type="month" id="filtroMes" style="max-width:220px;">
-
-                        <!-- Removido o filtroVendedor, conforme solicitado anteriormente -->
 
                         <button class="send-btn" style="margin-top:0;" onclick="filtrarMes()">FILTRAR</button>
                         <button class="logout" style="width:auto; margin-top:0; background:#64748b;" onclick="limparFiltro()">LIMPAR FILTROS</button>
@@ -385,6 +382,40 @@
                     </div>
                 </div>
 
+                <div class="page" id="indicadoresPcpPage">
+                    <div class="section-title" style="margin-bottom: 24px; font-size: 20px;">Indicadores e Métricas Gerenciais (PCP)</div>
+                    
+                    <div class="kpi-pcp-board">
+                        <div class="kpi-pcp-card">
+                            <span>Taxa Atendimento Diário (Hoje)</span>
+                            <strong id="kpiPcpHoje" style="color: #14b8a6;">0</strong>
+                        </div>
+                        <div class="kpi-pcp-card">
+                            <span>Decoração (Pendentes/Andamento)</span>
+                            <strong id="kpiDecPendente" style="color: #f59e0b;">0</strong>
+                        </div>
+                        <div class="kpi-pcp-card">
+                            <span>Montagem (Pendentes/Andamento)</span>
+                            <strong id="kpiMonPendente" style="color: #0ea5e9;">0</strong>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <canvas id="chartStatusPcp"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="chartAreaPcp"></canvas>
+                        </div>
+                        <div class="chart-container" style="grid-column: 1 / -1; height: 300px;">
+                            <canvas id="chartEvolucaoPcp"></canvas>
+                        </div>
+                        <div class="chart-container" style="grid-column: 1 / -1; height: 300px;">
+                            <canvas id="chartAtendimentoPcp"></canvas>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="page" id="exportacoes">
                     <div class="cards">
                         <div class="card">
@@ -413,101 +444,53 @@
         </main>
     </div>
 
-    <!-- MODAL PCP (Atualizado com Abas) -->
     <div class="modal" id="modalResposta">
         <div class="modal-content" id="modalPcpContent">
             <div class="modal-header">
-                <h2 class="modal-title" id="modalTituloGeral">Painel PCP</h2>
+                <h2 class="modal-title" id="modalTituloGeral">Responder Solicitação</h2>
                 <button type="button" class="btn-fechar-modal" onclick="fecharModal()">&times;</button>
             </div>
             
-            <!-- NOVO: ABAS DE NAVEGAÇÃO DO PCP -->
-            <div class="tabs-pcp">
-                <button class="tab-btn-pcp active" onclick="mudarAbaPcp('solicitacoes')">Solicitações</button>
-                <button class="tab-btn-pcp" onclick="mudarAbaPcp('indicadores')">Indicadores</button>
+            <div class="field">
+                <label class="field-label">RESPONSÁVEL PELO RETORNO *</label>
+                <input type="text" id="responsavelPcp" placeholder="Seu nome completo...">
             </div>
-
-            <!-- TELA 1 PCP: RESPONDER SOLICITAÇÃO (Mantida exatamente como original) -->
-            <div id="abaPcpSolicitacoes">
-                <div class="field">
-                    <label class="field-label">RESPONSÁVEL PELO RETORNO *</label>
-                    <input type="text" id="responsavelPcp" placeholder="Seu nome completo...">
-                </div>
-                
-                <div class="field">
-                    <label class="field-label">ÁREA DESIGNADA *</label>
-                    <select id="areaPcp">
-                        <option value="Escolha">Escolha</option>
-                        <option value="Decoração">Decoração</option>
-                        <option value="Montagem">Montagem</option>
-                    </select>
-                </div>
-                
-                <div class="field">
-                    <label class="field-label">RETORNO / OBSERVAÇÃO</label>
-                    <textarea id="respostaTexto" placeholder="Escreva o retorno para la equipe comercial..."></textarea>
-                </div>
-                
-                <div class="field">
-                    <label class="field-label">DATA PRODUÇÃO</label>
-                    <input type="date" id="dataProducao">
-                </div>
-                
-                <div class="field">
-                    <label class="field-label">DATA RETORNO PCP</label>
-                    <input type="date" id="dataRetornoPcp">
-                </div>
-                
-                <div class="field">
-                    <label class="field-label">STATUS</label>
-                    <select id="novoStatus">
-                        <option value="PENDENTE">PENDENTE</option>
-                        <option value="AGUARDANDO SUPRIMENTOS">AGUARDANDO SUPRIMENTOS</option>
-                        <option value="AGUARDANDO COMERCIAL">AGUARDANDO COMERCIAL</option>
-                        <option value="PROGRAMADO">PROGRAMADO</option>
-                    </select>
-                </div>
-                
-                <button class="save-btn" id="btnSalvarResposta" onclick="salvarResposta()">ENVIAR RETORNO</button>
+            
+            <div class="field">
+                <label class="field-label">ÁREA DESIGNADA *</label>
+                <select id="areaPcp">
+                    <option value="Escolha">Escolha</option>
+                    <option value="Decoração">Decoração</option>
+                    <option value="Montagem">Montagem</option>
+                </select>
             </div>
-
-            <!-- TELA 2 PCP: INDICADORES GERENCIAIS -->
-            <div id="abaPcpIndicadores" class="hidden">
-                
-                <!-- KPIs Rápidos -->
-                <div class="kpi-pcp-board">
-                    <div class="kpi-pcp-card">
-                        <span>Taxa Atendimento Diário (Hoje)</span>
-                        <strong id="kpiPcpHoje" style="color: #14b8a6;">0</strong>
-                    </div>
-                    <div class="kpi-pcp-card">
-                        <span>Decoração (Pendentes/Andamento)</span>
-                        <strong id="kpiDecPendente" style="color: #f59e0b;">0</strong>
-                    </div>
-                    <div class="kpi-pcp-card">
-                        <span>Montagem (Pendentes/Andamento)</span>
-                        <strong id="kpiMonPendente" style="color: #0ea5e9;">0</strong>
-                    </div>
-                </div>
-
-                <!-- Gráficos -->
-                <div class="charts-grid">
-                    <div class="chart-container">
-                        <canvas id="chartStatusPcp"></canvas>
-                    </div>
-                    <div class="chart-container">
-                        <canvas id="chartAreaPcp"></canvas>
-                    </div>
-                    <div class="chart-container" style="grid-column: 1 / -1; height: 300px;">
-                        <canvas id="chartEvolucaoPcp"></canvas>
-                    </div>
-                    <div class="chart-container" style="grid-column: 1 / -1; height: 300px;">
-                        <canvas id="chartAtendimentoPcp"></canvas>
-                    </div>
-                </div>
-
+            
+            <div class="field">
+                <label class="field-label">RETORNO / OBSERVAÇÃO</label>
+                <textarea id="respostaTexto" placeholder="Escreva o retorno para la equipe comercial..."></textarea>
             </div>
-
+            
+            <div class="field">
+                <label class="field-label">DATA PRODUÇÃO</label>
+                <input type="date" id="dataProducao">
+            </div>
+            
+            <div class="field">
+                <label class="field-label">DATA RETORNO PCP</label>
+                <input type="date" id="dataRetornoPcp">
+            </div>
+            
+            <div class="field">
+                <label class="field-label">STATUS</label>
+                <select id="novoStatus">
+                    <option value="PENDENTE">PENDENTE</option>
+                    <option value="AGUARDANDO SUPRIMENTOS">AGUARDANDO SUPRIMENTOS</option>
+                    <option value="AGUARDANDO COMERCIAL">AGUARDANDO COMERCIAL</option>
+                    <option value="PROGRAMADO">PROGRAMADO</option>
+                </select>
+            </div>
+            
+            <button class="save-btn" id="btnSalvarResposta" onclick="salvarResposta()">ENVIAR RETORNO</button>
         </div>
     </div>
 

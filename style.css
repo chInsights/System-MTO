@@ -571,7 +571,7 @@ textarea {
     background-color: #f8fafc;
 }
 
-/* Customização dos Status (Atualizados para v1.1.4) */
+/* Customização dos Status */
 .status-badge {
     padding: 4px 8px;
     border-radius: 12px;
@@ -628,12 +628,6 @@ textarea {
     width: 500px;
     max-width: 90%;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-    transition: width 0.3s ease;
-}
-
-/* Classe dinâmica para expandir o modal PCP ao exibir os gráficos */
-.modal-lg {
-    width: 900px;
 }
 
 .modal-header {
@@ -707,38 +701,8 @@ textarea {
 }
 
 /* ==========================================================================
-   9. ABAS DO PCP (NOVA ESTRUTURA) E DASHBOARD GRÁFICO
+   9. INDICADORES PCP (DASHBOARD GRÁFICO NA PÁGINA)
    ========================================================================== */
-.tabs-pcp {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #e2e8f0;
-    padding-bottom: 12px;
-}
-
-.tabs-pcp .tab-btn-pcp {
-    background: transparent;
-    border: none;
-    padding: 10px 18px;
-    font-weight: 600;
-    font-size: 13px;
-    color: #64748b;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.2s;
-}
-
-.tabs-pcp .tab-btn-pcp:hover {
-    background: #f1f5f9;
-    color: #334155;
-}
-
-.tabs-pcp .tab-btn-pcp.active {
-    background: #0f172a;
-    color: #ffffff;
-}
-
 .kpi-pcp-board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
