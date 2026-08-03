@@ -445,9 +445,32 @@
                             <div class="chart-container" style="grid-column: 1 / -1; height: 300px;">
                                 <canvas id="chartAtendimentoPcp"></canvas>
                             </div>
-                            <!-- NOVO GRÁFICO: TOP 10 VENDEDORES -->
-                            <div class="chart-container" style="grid-column: 1 / -1; height: 350px;">
-                                <canvas id="chartTopVendedoresPcp"></canvas>
+                            
+                            <!-- NOVO GRÁFICO: TOP 10 VENDEDORES (Com Filtro Múltiplo Incorporado) -->
+                            <div class="chart-container" style="grid-column: 1 / -1; display: flex; flex-direction: column; min-height: 380px;">
+                                
+                                <div class="header-top10" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 16px; position: relative; z-index: 20;">
+                                    <h3 style="font-size: 14px; font-weight: 700; color: #475569;">Top 10 Solicitações por Vendedor</h3>
+                                    
+                                    <div class="multi-select-wrapper" id="wrapperFiltroTop10">
+                                        <button class="multi-select-btn" onclick="toggleMultiSelect(event)">
+                                            <span><i class="fa-solid fa-filter"></i> Filtrar Vendedores</span>
+                                            <i class="fa-solid fa-chevron-down"></i>
+                                        </button>
+                                        <div class="multi-select-dropdown hidden" id="dropdownVendedoresTop10">
+                                            <!-- Povoado via JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div id="emptyStateTop10" class="hidden" style="text-align: center; color: #94a3b8; font-style: italic; margin: auto; padding: 40px;">
+                                    Nenhuma solicitação encontrada para os filtros selecionados.
+                                </div>
+                                
+                                <div id="canvasContainerTop10" style="flex: 1; position: relative; width: 100%; min-height: 250px;">
+                                    <canvas id="chartTopVendedoresPcp"></canvas>
+                                </div>
+
                             </div>
                         </div>
 

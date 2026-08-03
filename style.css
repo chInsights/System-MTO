@@ -701,7 +701,7 @@ textarea {
 }
 
 /* ==========================================================================
-   9. INDICADORES PCP (DASHBOARD GRÁFICO E MODO TV)
+   9. INDICADORES PCP (DASHBOARD GRÁFICO, MODO TV E FILTRO MULTI-SELECT)
    ========================================================================== */
 .kpi-pcp-board {
     display: grid;
@@ -766,6 +766,63 @@ textarea {
 
 .btn-tv:hover {
     background: #7c3aed;
+}
+
+/* Estilos Específicos para o Filtro Múltiplo Personalizado (Top 10) */
+.multi-select-wrapper {
+    position: relative;
+    width: 220px;
+}
+
+.multi-select-btn {
+    width: 100%;
+    text-align: left;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #fff;
+    font-size: 12px;
+    color: #334155;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+}
+
+.multi-select-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    width: 250px;
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    margin-top: 4px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.multi-select-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    color: #334155;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.multi-select-option:hover {
+    background: #f1f5f9;
 }
 
 /* Estilos Específicos para o MODO TV/APRESENTAÇÃO */

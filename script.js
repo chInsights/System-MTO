@@ -25,6 +25,7 @@ let graficoEvolucao = null;
 let graficoAtendimento = null;
 let graficoTopVendedores = null;
 let filtroMesPcpJaPreenchido = false;
+let filtroVendedoresPcpJaPreenchido = false;
 
 function carregarSelectVendedores() {
     const select = document.getElementById("vendedorNome");
@@ -547,32 +548,31 @@ async function salvarResposta() {
 }
 
 /* ==========================================================================
-   INDICADORES PCP COM RÓTULOS, FILTRO MÊS, MODO TV E TOP VENDEDORES
+   INDICADORES PCP COM RÓTULOS E FILTRO MÚLTIPLO TOP 10
    ========================================================================== */
 
-// 1. Função para entrar/sair de Tela Cheia (Modo TV)
+// 1. Fullscreen / Modo TV
 window.toggleModoTV = function() {
     const container = document.getElementById("containerDashboardTV");
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         if (container.requestFullscreen) {
             container.requestFullscreen().catch(e => console.error("Erro fullscreen:", e));
-        } else if (container.webkitRequestFullscreen) { /* Safari */
+        } else if (container.webkitRequestFullscreen) {
             container.webkitRequestFullscreen();
-        } else if (container.msRequestFullscreen) { /* IE11 */
+        } else if (container.msRequestFullscreen) {
             container.msRequestFullscreen();
         }
     } else {
         if (document.exitFullscreen) {
             document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) { /* Safari */
+        } else if (document.webkitExitFullscreen) {
             document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) { /* IE11 */
+        } else if (document.msExitFullscreen) {
             document.msExitFullscreen();
         }
     }
 };
 
-// Listener para ajustar redimensionamento dos gráficos quando entrar/sair do Fullscreen
 document.addEventListener('fullscreenchange', handleFullscreenChange);
 document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
 
@@ -588,7 +588,6 @@ function handleFullscreenChange() {
         if (btnSair) btnSair.classList.add("hidden");
     }
     
-    // Aguardar transição de CSS e forçar redimensionamento dos gráficos
     setTimeout(() => {
         if(graficoStatus) graficoStatus.resize();
         if(graficoArea) graficoArea.resize();
@@ -621,7 +620,6 @@ function popularFiltroMesPcp() {
         }
     });
 
-    // Guardar o valor selecionado se já existir
     const valorAtual = select.value;
     select.innerHTML = '<option value="">Todos os Meses</option>';
 
@@ -644,14 +642,47 @@ function popularFiltroMesPcp() {
     filtroMesPcpJaPreenchido = true;
 }
 
-// 3. Renderização do Dashboard
+// 3. Sistema Customizado Multi-Select para o Top 10 Vendedores
+window.toggleMultiSelect = function(e) {
+    e.stopPropagation();
+    const dropdown = document.getElementById("dropdownVendedoresTop10");
+    if(dropdown) dropdown.classList.toggle("hidden");
+};
+
+// Fechar dropdown ao clicar fora
+document.addEventListener("click", function(e) {
+    const wrapper = document.getElementById("wrapperFiltroTop10");
+    const dropdown = document.getElementById("dropdownVendedoresTop10");
+    if(wrapper && dropdown && !wrapper.contains(e.target)) {
+        dropdown.classList.add("hidden");
+    }
+});
+
+function popularFiltroTop10Vendedores() {
+    const dropdown = document.getElementById("dropdownVendedoresTop10");
+    if(!dropdown || filtroVendedoresPcpJaPreenchido) return;
+
+    dropdown.innerHTML = "";
+    listaVendedores.sort().forEach(v => {
+        dropdown.innerHTML += `
+            <label class="multi-select-option">
+                <input type="checkbox" value="${v}" class="chk-vendedor-top10" onchange="renderizarIndicadoresPcp()">
+                ${v}
+            </label>
+        `;
+    });
+    filtroVendedoresPcpJaPreenchido = true;
+}
+
+// 4. Renderização Geral do Dashboard
 function renderizarIndicadoresPcp() {
     popularFiltroMesPcp();
+    popularFiltroTop10Vendedores();
     
     const filtroMes = document.getElementById("filtroMesPcp").value;
     const hojeStr = new Date().toLocaleDateString("pt-BR");
     
-    // Filtrar os dados pelo mês selecionado
+    // Filtro 1: Mês Global
     let dadosFiltrados = solicitacoes;
     if (filtroMes) {
         dadosFiltrados = solicitacoes.filter(item => {
@@ -668,19 +699,22 @@ function renderizarIndicadoresPcp() {
         tituloKpiAtendimento.innerText = filtroMes ? "Total Atendimentos (Período)" : "Taxa Atendimento Diário (Hoje)";
     }
 
-    // Contadores
+    // Variáveis Agregadoras Globais
     let atendimentosPcp = 0;
     const contagemStatus = { "PENDENTE": 0, "AGUARDANDO SUPRIMENTOS": 0, "AGUARDANDO COMERCIAL": 0, "PROGRAMADO": 0 };
     let dec = { pendente: 0, andamento: 0, concluido: 0 };
     let mon = { pendente: 0, andamento: 0, concluido: 0 };
-    
-    // Históricos para gráficos
     const historicoNovas = {}; 
     const historicoAtendimento = {};
-    const contagemVendedores = {}; // Para o novo gráfico de top 10
 
+    // Variável Específica para Top 10 Vendedores
+    const contagemVendedores = {}; 
+    // Ler checkboxes marcados no novo filtro múltiplo
+    const checkboxesVendedores = Array.from(document.querySelectorAll(".chk-vendedor-top10:checked")).map(cb => cb.value);
+
+    // Iteração Única sobre Dados Filtrados
     dadosFiltrados.forEach(item => {
-        // Taxa de Atendimento
+        // Atendimentos PCP
         if (item.logAuditoria) {
             const match = item.logAuditoria.match(/em (\d{2}\/\d{2}\/\d{4})/);
             if(match) {
@@ -691,12 +725,12 @@ function renderizarIndicadoresPcp() {
             }
         }
 
-        // Distribuição de Status
+        // Status
         const st = item.status || "PENDENTE";
         if (contagemStatus[st] !== undefined) contagemStatus[st]++;
         else contagemStatus[st] = 1;
 
-        // Volume por Área de Produção
+        // Áreas
         if (item.areaPcp === "Decoração") {
             if (st === "PENDENTE") dec.pendente++;
             else if (st === "PROGRAMADO") dec.concluido++;
@@ -707,14 +741,16 @@ function renderizarIndicadoresPcp() {
             else mon.andamento++;
         }
 
-        // Evolução Diária (Entrada)
+        // Evolução de Entradas
         if (item.dataSolicitacao && item.dataSolicitacao !== "-") {
             historicoNovas[item.dataSolicitacao] = (historicoNovas[item.dataSolicitacao] || 0) + 1;
         }
 
-        // Top 10 Vendedores
+        // Vendedores (Respeitando também o filtro específico multi-select se houver)
         if (item.vendedor && item.vendedor !== "-") {
-            contagemVendedores[item.vendedor] = (contagemVendedores[item.vendedor] || 0) + 1;
+            if (checkboxesVendedores.length === 0 || checkboxesVendedores.includes(item.vendedor)) {
+                contagemVendedores[item.vendedor] = (contagemVendedores[item.vendedor] || 0) + 1;
+            }
         }
     });
 
@@ -728,7 +764,7 @@ function renderizarIndicadoresPcp() {
     if(graficoAtendimento) graficoAtendimento.destroy();
     if(graficoTopVendedores) graficoTopVendedores.destroy();
 
-    // 1. Gráfico Rosca (Doughnut) com Rótulo
+    // 1. Gráfico Rosca
     const ctxStatus = document.getElementById('chartStatusPcp').getContext('2d');
     graficoStatus = new Chart(ctxStatus, {
         type: 'doughnut',
@@ -762,7 +798,7 @@ ${value} (${percentage})`;
         }
     });
 
-    // 2. Gráfico Barras Empilhadas com Rótulo Interno
+    // 2. Gráfico Barras Empilhadas
     const ctxArea = document.getElementById('chartAreaPcp').getContext('2d');
     graficoArea = new Chart(ctxArea, {
         type: 'bar',
@@ -790,7 +826,7 @@ ${value} (${percentage})`;
         }
     });
 
-    // 3. Gráfico de Área (Linha Prenchida) com Rótulo Acima do Ponto
+    // 3. Gráfico de Área (Evolução Diária)
     const datasEv = Object.keys(historicoNovas).sort((a,b) => {
         let pA = a.split('/'); let pB = b.split('/'); 
         return new Date(`${pA[2]}-${pA[1]}-${pA[0]}`) - new Date(`${pB[2]}-${pB[1]}-${pB[0]}`);
@@ -811,6 +847,7 @@ ${value} (${percentage})`;
             responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } },
             scales: { y: { suggestedMin: 0 } },
             plugins: { 
+                legend: { display: false },
                 title: { display: true, text: 'Evolução Diária (Últimos Dias da Seleção)' },
                 datalabels: {
                     color: '#6366f1',
@@ -824,7 +861,7 @@ ${value} (${percentage})`;
         }
     });
 
-    // 4. Gráfico de Colunas com Rótulo Acima da Barra E REMOÇÃO DA LEGENDA
+    // 4. Gráfico de Colunas (Respostas PCP)
     const datasAt = Object.keys(historicoAtendimento).sort((a,b) => {
         let pA = a.split('/'); let pB = b.split('/'); 
         return new Date(`${pA[2]}-${pA[1]}-${pA[0]}`) - new Date(`${pB[2]}-${pB[1]}-${pB[0]}`);
@@ -844,7 +881,7 @@ ${value} (${percentage})`;
             responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } },
             scales: { y: { suggestedMin: 0 } },
             plugins: { 
-                legend: { display: false }, // AJUSTE 1: Remove o ponto verde (legenda)
+                legend: { display: false }, // AJUSTE 1: REMOVIDO DEFINITIVAMENTE O PONTO VERDE (LEGENDA)
                 title: { display: true, text: 'Produtividade de Retornos PCP (Resoluções)' },
                 datalabels: {
                     color: '#14b8a6',
@@ -857,45 +894,56 @@ ${value} (${percentage})`;
         }
     });
 
-    // 5. NOVO GRÁFICO: Top 10 Solicitações por Vendedor (Barras Horizontais)
+    // 5. Novo Gráfico Top 10 Vendedores com Estado Vazio
     const topVendedores = Object.entries(contagemVendedores)
-        .sort((a, b) => b[1] - a[1]) // Ordena do maior para o menor
-        .slice(0, 10); // Pega os 10 primeiros
+        .sort((a, b) => b[1] - a[1]) // Do maior para o menor
+        .slice(0, 10); // Apenas 10 primeiros
     
-    const labelsVendedores = topVendedores.map(v => v[0]);
-    const dadosVendedores = topVendedores.map(v => v[1]);
-    
-    const ctxTopVend = document.getElementById('chartTopVendedoresPcp').getContext('2d');
-    graficoTopVendedores = new Chart(ctxTopVend, {
-        type: 'bar',
-        data: {
-            labels: labelsVendedores,
-            datasets: [{
-                label: 'Solicitações', 
-                data: dadosVendedores, 
-                backgroundColor: '#8b5cf6', 
-                borderRadius: 4
-            }]
-        },
-        options: {
-            indexAxis: 'y', // Define o gráfico como barras horizontais
-            responsive: true, 
-            maintainAspectRatio: false, 
-            layout: { padding: { right: 35 } },
-            scales: { x: { suggestedMin: 0 } },
-            plugins: {
-                legend: { display: false }, // Oculta a legenda desnecessária
-                title: { display: true, text: 'Top 10 Solicitações por Vendedor' },
-                datalabels: {
-                    color: '#8b5cf6',
-                    font: { weight: 'bold', size: 12 },
-                    anchor: 'end',
-                    align: 'right',
-                    formatter: (value) => value > 0 ? value : null
+    const canvasContainerTop10 = document.getElementById("canvasContainerTop10");
+    const emptyStateTop10 = document.getElementById("emptyStateTop10");
+
+    if (topVendedores.length === 0) {
+        canvasContainerTop10.classList.add("hidden");
+        emptyStateTop10.classList.remove("hidden");
+    } else {
+        canvasContainerTop10.classList.remove("hidden");
+        emptyStateTop10.classList.add("hidden");
+
+        const labelsVendedores = topVendedores.map(v => v[0]);
+        const dadosVendedores = topVendedores.map(v => v[1]);
+        
+        const ctxTopVend = document.getElementById('chartTopVendedoresPcp').getContext('2d');
+        graficoTopVendedores = new Chart(ctxTopVend, {
+            type: 'bar',
+            data: {
+                labels: labelsVendedores,
+                datasets: [{
+                    label: 'Solicitações', 
+                    data: dadosVendedores, 
+                    backgroundColor: '#8b5cf6', 
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                indexAxis: 'y', // Define o gráfico como barras horizontais
+                responsive: true, 
+                maintainAspectRatio: false, 
+                layout: { padding: { right: 35 } },
+                scales: { x: { suggestedMin: 0 } },
+                plugins: {
+                    legend: { display: false }, // Oculta a legenda 
+                    title: { display: false }, // Título está no HTML junto com o filtro
+                    datalabels: {
+                        color: '#8b5cf6',
+                        font: { weight: 'bold', size: 12 },
+                        anchor: 'end',
+                        align: 'right',
+                        formatter: (value) => value > 0 ? value : null
+                    }
                 }
             }
-        }
-    });
+        });
+    }
 }
 /* ========================================================================== */
 
@@ -990,3 +1038,4 @@ window.renderMonitoramentoVendedor = renderMonitoramentoVendedor;
 
 window.renderizarIndicadoresPcp = renderizarIndicadoresPcp;
 window.toggleModoTV = toggleModoTV;
+window.toggleMultiSelect = toggleMultiSelect;
