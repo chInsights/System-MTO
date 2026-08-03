@@ -701,7 +701,7 @@ textarea {
 }
 
 /* ==========================================================================
-   9. INDICADORES PCP (DASHBOARD GRÁFICO NA PÁGINA)
+   9. INDICADORES PCP (DASHBOARD GRÁFICO E MODO TV)
    ========================================================================== */
 .kpi-pcp-board {
     display: grid;
@@ -748,4 +748,63 @@ textarea {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.btn-tv {
+    background: #8b5cf6;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+
+.btn-tv:hover {
+    background: #7c3aed;
+}
+
+/* Estilos Específicos para o MODO TV/APRESENTAÇÃO */
+#containerDashboardTV {
+    transition: all 0.3s ease;
+}
+
+#containerDashboardTV.tv-mode-active {
+    padding: 40px;
+    background-color: #f1f5f9 !important;
+    width: 100vw;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+#containerDashboardTV.tv-mode-active .kpi-pcp-board {
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+#containerDashboardTV.tv-mode-active .kpi-pcp-card {
+    padding: 30px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+#containerDashboardTV.tv-mode-active .kpi-pcp-card span {
+    font-size: 18px;
+}
+
+#containerDashboardTV.tv-mode-active .kpi-pcp-card strong {
+    font-size: 56px;
+}
+
+#containerDashboardTV.tv-mode-active .charts-grid {
+    gap: 24px;
+}
+
+#containerDashboardTV.tv-mode-active .chart-container {
+    height: 40vh !important;
+    padding: 24px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }

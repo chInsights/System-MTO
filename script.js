@@ -13,6 +13,11 @@ let filtroVendedorAtual = "";
 let filtroStatusAtual = "TODOS";
 let limiteRegistros = 100;
 
+// Registrar o plugin DataLabels globalmente se estiver disponível
+if (window.ChartDataLabels) {
+    Chart.register(window.ChartDataLabels);
+}
+
 // Variáveis para armazenar as instâncias do Chart.js
 let graficoStatus = null;
 let graficoArea = null;
@@ -540,8 +545,54 @@ async function salvarResposta() {
 }
 
 /* ==========================================================================
-   NOVA FUNCIONALIDADE: INDICADORES PCP MOVIDA PARA PÁGINA PRINCIPAL
+   NOVA FUNCIONALIDADE: INDICADORES PCP COM RÓTULOS E MODO TV
    ========================================================================== */
+
+// 1. Função para entrar/sair de Tela Cheia
+window.toggleModoTV = function() {
+    const container = document.getElementById("containerDashboardTV");
+    if (!document.fullscreenElement) {
+        if (container.requestFullscreen) {
+            container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) { /* Safari */
+            container.webkitRequestFullscreen();
+        } else if (container.msRequestFullscreen) { /* IE11 */
+            container.msRequestFullscreen();
+        }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) { /* Safari */
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) { /* IE11 */
+            document.msExitFullscreen();
+        }
+    }
+};
+
+// Listener para ajustar CSS quando entrar/sair do Fullscreen
+document.addEventListener('fullscreenchange', () => {
+    const container = document.getElementById("containerDashboardTV");
+    const btnSair = document.getElementById("btnSairTV");
+    
+    if (document.fullscreenElement) {
+        container.classList.add("tv-mode-active");
+        if (btnSair) btnSair.classList.remove("hidden");
+    } else {
+        container.classList.remove("tv-mode-active");
+        if (btnSair) btnSair.classList.add("hidden");
+    }
+    
+    // Aguardar transição de CSS e forçar redimensionamento dos gráficos para ocuparem o espaço da TV
+    setTimeout(() => {
+        if(graficoStatus) graficoStatus.resize();
+        if(graficoArea) graficoArea.resize();
+        if(graficoEvolucao) graficoEvolucao.resize();
+        if(graficoAtendimento) graficoAtendimento.resize();
+    }, 200);
+});
+
+// 2. Renderização com Rótulos de Dados
 function renderizarIndicadoresPcp() {
     const hojeStr = new Date().toLocaleDateString("pt-BR");
     
@@ -556,7 +607,6 @@ function renderizarIndicadoresPcp() {
     const historicoAtendimento = {};
 
     solicitacoes.forEach(item => {
-        // Taxa de Atendimento Diário (Log Auditoria reflete respostas)
         if (item.logAuditoria) {
             const match = item.logAuditoria.match(/em (\d{2}\/\d{2}\/\d{4})/);
             if(match) {
@@ -566,12 +616,10 @@ function renderizarIndicadoresPcp() {
             }
         }
 
-        // Distribuição de Status
         const st = item.status || "PENDENTE";
         if (contagemStatus[st] !== undefined) contagemStatus[st]++;
         else contagemStatus[st] = 1;
 
-        // Volume por Área de Produção
         if (item.areaPcp === "Decoração") {
             if (st === "PENDENTE") dec.pendente++;
             else if (st === "PROGRAMADO") dec.concluido++;
@@ -582,24 +630,21 @@ function renderizarIndicadoresPcp() {
             else mon.andamento++;
         }
 
-        // Evolução Diária de Demandas (Data de Solicitação)
         if (item.dataSolicitacao && item.dataSolicitacao !== "-") {
             historicoNovas[item.dataSolicitacao] = (historicoNovas[item.dataSolicitacao] || 0) + 1;
         }
     });
 
-    // Atualiza KPIs em Tela
     document.getElementById("kpiPcpHoje").innerText = atendimentosHoje;
     document.getElementById("kpiDecPendente").innerText = `${dec.pendente} / ${dec.andamento}`;
     document.getElementById("kpiMonPendente").innerText = `${mon.pendente} / ${mon.andamento}`;
 
-    // Destrói os gráficos antigos para evitar overlap do Chart.js
     if(graficoStatus) graficoStatus.destroy();
     if(graficoArea) graficoArea.destroy();
     if(graficoEvolucao) graficoEvolucao.destroy();
     if(graficoAtendimento) graficoAtendimento.destroy();
 
-    // 1. Gráfico Rosca (Doughnut) - Status das Solicitações
+    // 1. Gráfico Rosca (Doughnut) com Rótulo
     const ctxStatus = document.getElementById('chartStatusPcp').getContext('2d');
     graficoStatus = new Chart(ctxStatus, {
         type: 'doughnut',
@@ -611,12 +656,27 @@ function renderizarIndicadoresPcp() {
             }]
         },
         options: { 
-            responsive: true, maintainAspectRatio: false, 
-            plugins: { legend: { position: 'right' }, title: { display: true, text: 'Status Global de Solicitações' } } 
+            responsive: true, maintainAspectRatio: false, layout: { padding: 10 },
+            plugins: { 
+                legend: { position: 'right' }, 
+                title: { display: true, text: 'Status Global de Solicitações' },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 12 },
+                    textAlign: 'center',
+                    formatter: (value, ctx) => {
+                        if(value === 0) return null;
+                        let sum = 0;
+                        ctx.chart.data.datasets[0].data.forEach(data => sum += data);
+                        let percentage = (value * 100 / sum).toFixed(1) + "%";
+                        return `${value}\n(${percentage})`;
+                    }
+                }
+            } 
         }
     });
 
-    // 2. Gráfico Barras Empilhadas - Volume da Área
+    // 2. Gráfico Barras Empilhadas com Rótulo Interno
     const ctxArea = document.getElementById('chartAreaPcp').getContext('2d');
     graficoArea = new Chart(ctxArea, {
         type: 'bar',
@@ -631,15 +691,24 @@ function renderizarIndicadoresPcp() {
         options: { 
             responsive: true, maintainAspectRatio: false, 
             scales: { x: { stacked: true }, y: { stacked: true } }, 
-            plugins: { title: { display: true, text: 'Volume por Setor Produtivo' } } 
+            plugins: { 
+                title: { display: true, text: 'Volume por Setor Produtivo' },
+                datalabels: {
+                    color: '#fff',
+                    font: { weight: 'bold', size: 14 },
+                    anchor: 'center',
+                    align: 'center',
+                    formatter: (value) => value > 0 ? value : null
+                }
+            } 
         }
     });
 
-    // 3. Gráfico de Área (Linha Prenchida) - Evolução de Entrada
+    // 3. Gráfico de Área (Linha Prenchida) com Rótulo Acima do Ponto
     const datasEv = Object.keys(historicoNovas).sort((a,b) => {
         let pA = a.split('/'); let pB = b.split('/'); 
         return new Date(`${pA[2]}-${pA[1]}-${pA[0]}`) - new Date(`${pB[2]}-${pB[1]}-${pB[0]}`);
-    }).slice(-15); // Pega últimos 15 dias para o gráfico ficar limpo
+    }).slice(-15);
     
     const valsEv = datasEv.map(d => historicoNovas[d]);
     const ctxEv = document.getElementById('chartEvolucaoPcp').getContext('2d');
@@ -653,12 +722,22 @@ function renderizarIndicadoresPcp() {
             }]
         },
         options: { 
-            responsive: true, maintainAspectRatio: false, 
-            plugins: { title: { display: true, text: 'Evolução Diária (Últimos Dias)' } } 
+            responsive: true, maintainAspectRatio: false, layout: { padding: { top: 20 } },
+            plugins: { 
+                title: { display: true, text: 'Evolução Diária (Últimos Dias)' },
+                datalabels: {
+                    color: '#6366f1',
+                    font: { weight: 'bold', size: 12 },
+                    anchor: 'end',
+                    align: 'top',
+                    offset: 4,
+                    formatter: (value) => value > 0 ? value : null
+                }
+            } 
         }
     });
 
-    // 4. Gráfico de Colunas - Histórico de Atendimentos
+    // 4. Gráfico de Colunas com Rótulo Acima da Barra
     const datasAt = Object.keys(historicoAtendimento).sort((a,b) => {
         let pA = a.split('/'); let pB = b.split('/'); 
         return new Date(`${pA[2]}-${pA[1]}-${pA[0]}`) - new Date(`${pB[2]}-${pB[1]}-${pB[0]}`);
@@ -675,8 +754,17 @@ function renderizarIndicadoresPcp() {
             }]
         },
         options: { 
-            responsive: true, maintainAspectRatio: false, 
-            plugins: { title: { display: true, text: 'Produtividade de Retornos PCP (Resoluções)' } } 
+            responsive: true, maintainAspectRatio: false, layout: { padding: { top: 20 } },
+            plugins: { 
+                title: { display: true, text: 'Produtividade de Retornos PCP (Resoluções)' },
+                datalabels: {
+                    color: '#14b8a6',
+                    font: { weight: 'bold', size: 12 },
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: (value) => value > 0 ? value : null
+                }
+            } 
         }
     });
 }

@@ -17,6 +17,7 @@
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.6.0/dist/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 </head>
 
 <body>
@@ -383,36 +384,49 @@
                 </div>
 
                 <div class="page" id="indicadoresPcpPage">
-                    <div class="section-title" style="margin-bottom: 24px; font-size: 20px;">Indicadores e Métricas Gerenciais (PCP)</div>
-                    
-                    <div class="kpi-pcp-board">
-                        <div class="kpi-pcp-card">
-                            <span>Taxa Atendimento Diário (Hoje)</span>
-                            <strong id="kpiPcpHoje" style="color: #14b8a6;">0</strong>
-                        </div>
-                        <div class="kpi-pcp-card">
-                            <span>Decoração (Pendentes/Andamento)</span>
-                            <strong id="kpiDecPendente" style="color: #f59e0b;">0</strong>
-                        </div>
-                        <div class="kpi-pcp-card">
-                            <span>Montagem (Pendentes/Andamento)</span>
-                            <strong id="kpiMonPendente" style="color: #0ea5e9;">0</strong>
-                        </div>
+                    <div class="header-indicadores" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                        <div class="section-title" style="margin-bottom: 0; font-size: 20px;">Indicadores e Métricas Gerenciais (PCP)</div>
+                        <button class="btn-tv" onclick="toggleModoTV()">
+                            <i class="fa-solid fa-tv"></i> MODO TV
+                        </button>
                     </div>
+                    
+                    <div id="containerDashboardTV" style="background: transparent;">
+                        
+                        <button id="btnSairTV" class="logout hidden" style="position: absolute; top: 20px; right: 20px; width: auto; z-index: 9999; padding: 10px 16px; font-size: 14px; border-radius: 8px;" onclick="toggleModoTV()">
+                            <i class="fa-solid fa-xmark"></i> Sair do Modo TV
+                        </button>
 
-                    <div class="charts-grid">
-                        <div class="chart-container">
-                            <canvas id="chartStatusPcp"></canvas>
+                        <div class="kpi-pcp-board">
+                            <div class="kpi-pcp-card">
+                                <span>Taxa Atendimento Diário (Hoje)</span>
+                                <strong id="kpiPcpHoje" style="color: #14b8a6;">0</strong>
+                            </div>
+                            <div class="kpi-pcp-card">
+                                <span>Decoração (Pendentes/Andamento)</span>
+                                <strong id="kpiDecPendente" style="color: #f59e0b;">0</strong>
+                            </div>
+                            <div class="kpi-pcp-card">
+                                <span>Montagem (Pendentes/Andamento)</span>
+                                <strong id="kpiMonPendente" style="color: #0ea5e9;">0</strong>
+                            </div>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="chartAreaPcp"></canvas>
+
+                        <div class="charts-grid">
+                            <div class="chart-container">
+                                <canvas id="chartStatusPcp"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="chartAreaPcp"></canvas>
+                            </div>
+                            <div class="chart-container" style="grid-column: 1 / -1; height: 300px;">
+                                <canvas id="chartEvolucaoPcp"></canvas>
+                            </div>
+                            <div class="chart-container" style="grid-column: 1 / -1; height: 300px;">
+                                <canvas id="chartAtendimentoPcp"></canvas>
+                            </div>
                         </div>
-                        <div class="chart-container" style="grid-column: 1 / -1; height: 300px;">
-                            <canvas id="chartEvolucaoPcp"></canvas>
-                        </div>
-                        <div class="chart-container" style="grid-column: 1 / -1; height: 300px;">
-                            <canvas id="chartAtendimentoPcp"></canvas>
-                        </div>
+
                     </div>
                 </div>
 
