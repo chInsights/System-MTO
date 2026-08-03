@@ -773,6 +773,51 @@ textarea {
     transition: all 0.3s ease;
 }
 
+/* Fallback do Webkit e Padrão */
+#containerDashboardTV:fullscreen,
+#containerDashboardTV:-webkit-full-screen {
+    padding: 40px;
+    background-color: #f1f5f9 !important;
+    width: 100vw;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+#containerDashboardTV:fullscreen .kpi-pcp-board,
+#containerDashboardTV:-webkit-full-screen .kpi-pcp-board {
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+#containerDashboardTV:fullscreen .kpi-pcp-card,
+#containerDashboardTV:-webkit-full-screen .kpi-pcp-card {
+    padding: 30px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+#containerDashboardTV:fullscreen .kpi-pcp-card span,
+#containerDashboardTV:-webkit-full-screen .kpi-pcp-card span {
+    font-size: 18px;
+}
+
+#containerDashboardTV:fullscreen .kpi-pcp-card strong,
+#containerDashboardTV:-webkit-full-screen .kpi-pcp-card strong {
+    font-size: 56px;
+}
+
+#containerDashboardTV:fullscreen .charts-grid,
+#containerDashboardTV:-webkit-full-screen .charts-grid {
+    gap: 24px;
+}
+
+#containerDashboardTV:fullscreen .chart-container,
+#containerDashboardTV:-webkit-full-screen .chart-container {
+    height: 45vh !important;
+    padding: 24px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Classe via JS como fallback de CSS */
 #containerDashboardTV.tv-mode-active {
     padding: 40px;
     background-color: #f1f5f9 !important;
@@ -804,7 +849,7 @@ textarea {
 }
 
 #containerDashboardTV.tv-mode-active .chart-container {
-    height: 40vh !important;
+    height: 45vh !important;
     padding: 24px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }

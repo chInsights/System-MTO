@@ -13,9 +13,12 @@
     
     <link rel="stylesheet" href="style.css">
 
+    <!-- Bibliotecas Externas -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.6.0/dist/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- Chart.js e Datalabels -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 </head>
@@ -93,6 +96,7 @@
                     <button class="active" onclick="abrirPagina('solicitacoes', this)">
                         <i class="fa-solid fa-table-columns"></i> Painel de Controle
                     </button>
+                    <!-- ABA INDICADORES (SÓ VISÍVEL PARA PCP) -->
                     <button id="menuIndicadores" class="hidden id-pcp-view" onclick="abrirPagina('indicadoresPcpPage', this); renderizarIndicadoresPcp();">
                         <i class="fa-solid fa-chart-pie"></i> Indicadores
                     </button>
@@ -119,6 +123,7 @@
             </header>
 
             <div class="content">
+                <!-- PÁGINA 1: PAINEL DE CONTROLE / SOLICITAÇÕES -->
                 <div class="page active" id="solicitacoes">
                     
                     <div class="cards">
@@ -175,11 +180,13 @@
 
                     <div class="form-box hidden" id="formSolicitante">
                         
+                        <!-- ABAS DE NAVEGAÇÃO DO VENDEDOR -->
                         <div class="tabs-vendedor">
                             <button class="tab-btn active" onclick="mudarAbaVendedor('nova')">Nova Solicitação</button>
                             <button class="tab-btn" onclick="mudarAbaVendedor('monitorar')">Monitorar Solicitações</button>
                         </div>
                         
+                        <!-- TELA 1: NOVA SOLICITAÇÃO -->
                         <div id="abaNovaSolicitacao">
                             <div class="section-title">Nova Solicitação MTO</div>
                             
@@ -293,6 +300,7 @@
                             <button class="send-btn" id="btnEnviarSol" onclick="enviarSolicitacaoMultiiens()">ENVIAR PEDIDO COMPLETO</button>
                         </div>
                         
+                        <!-- TELA 2: MONITORAR SOLICITAÇÕES (Vendedor) -->
                         <div id="abaMonitorarSolicitacoes" class="hidden">
                             <div class="section-title">Monitorar Solicitações</div>
                             
@@ -383,23 +391,34 @@
                     </div>
                 </div>
 
+                <!-- PÁGINA 2: INDICADORES GERENCIAIS PCP -->
                 <div class="page" id="indicadoresPcpPage">
-                    <div class="header-indicadores" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                    <div class="header-indicadores" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
                         <div class="section-title" style="margin-bottom: 0; font-size: 20px;">Indicadores e Métricas Gerenciais (PCP)</div>
-                        <button class="btn-tv" onclick="toggleModoTV()">
-                            <i class="fa-solid fa-tv"></i> MODO TV
-                        </button>
+                        
+                        <!-- NOVOS BOTÕES E FILTRO DE MÊS -->
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <select id="filtroMesPcp" onchange="renderizarIndicadoresPcp()" style="padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-size: 13px; font-weight: 600; color: #334155; min-width: 180px; background-color: #fff;">
+                                <option value="">Todos os Meses</option>
+                            </select>
+                            
+                            <button class="btn-tv" onclick="toggleModoTV()">
+                                <i class="fa-solid fa-tv"></i> MODO TV
+                            </button>
+                        </div>
                     </div>
                     
+                    <!-- CONTAINER DO DASHBOARD (Que entrará em tela cheia) -->
                     <div id="containerDashboardTV" style="background: transparent;">
                         
                         <button id="btnSairTV" class="logout hidden" style="position: absolute; top: 20px; right: 20px; width: auto; z-index: 9999; padding: 10px 16px; font-size: 14px; border-radius: 8px;" onclick="toggleModoTV()">
                             <i class="fa-solid fa-xmark"></i> Sair do Modo TV
                         </button>
 
+                        <!-- KPIs Rápidos -->
                         <div class="kpi-pcp-board">
                             <div class="kpi-pcp-card">
-                                <span>Taxa Atendimento Diário (Hoje)</span>
+                                <span id="tituloKpiAtendimento">Taxa Atendimento Diário (Hoje)</span>
                                 <strong id="kpiPcpHoje" style="color: #14b8a6;">0</strong>
                             </div>
                             <div class="kpi-pcp-card">
@@ -412,6 +431,7 @@
                             </div>
                         </div>
 
+                        <!-- Gráficos -->
                         <div class="charts-grid">
                             <div class="chart-container">
                                 <canvas id="chartStatusPcp"></canvas>
@@ -430,6 +450,7 @@
                     </div>
                 </div>
 
+                <!-- PÁGINA 3: EXPORTAÇÕES -->
                 <div class="page" id="exportacoes">
                     <div class="cards">
                         <div class="card">
@@ -458,6 +479,7 @@
         </main>
     </div>
 
+    <!-- MODAL DE RESPOSTA ORIGINAL -->
     <div class="modal" id="modalResposta">
         <div class="modal-content" id="modalPcpContent">
             <div class="modal-header">

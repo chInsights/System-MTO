@@ -14,8 +14,8 @@ let filtroStatusAtual = "TODOS";
 let limiteRegistros = 100;
 
 // Registrar o plugin DataLabels globalmente se estiver disponível
-if (window.ChartDataLabels) {
-    Chart.register(window.ChartDataLabels);
+if (typeof ChartDataLabels !== 'undefined') {
+    Chart.register(ChartDataLabels);
 }
 
 // Variáveis para armazenar as instâncias do Chart.js
@@ -23,6 +23,7 @@ let graficoStatus = null;
 let graficoArea = null;
 let graficoEvolucao = null;
 let graficoAtendimento = null;
+let filtroMesPcpJaPreenchido = false;
 
 function carregarSelectVendedores() {
     const select = document.getElementById("vendedorNome");
@@ -109,7 +110,7 @@ function abrirPagina(id, btn) {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     document.getElementById(id).classList.add("active");
     document.querySelectorAll(".menu button").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
+    if(btn) btn.classList.add("active");
 }
 
 function aplicarBloqueioDatasRetroativas() {
@@ -545,15 +546,15 @@ async function salvarResposta() {
 }
 
 /* ==========================================================================
-   NOVA FUNCIONALIDADE: INDICADORES PCP COM RÓTULOS E MODO TV
+   NOVA FUNCIONALIDADE: INDICADORES PCP COM RÓTULOS, FILTRO MÊS E MODO TV
    ========================================================================== */
 
-// 1. Função para entrar/sair de Tela Cheia
+// 1. Função para entrar/sair de Tela Cheia (Modo TV)
 window.toggleModoTV = function() {
     const container = document.getElementById("containerDashboardTV");
-    if (!document.fullscreenElement) {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         if (container.requestFullscreen) {
-            container.requestFullscreen();
+            container.requestFullscreen().catch(e => console.error("Erro fullscreen:", e));
         } else if (container.webkitRequestFullscreen) { /* Safari */
             container.webkitRequestFullscreen();
         } else if (container.msRequestFullscreen) { /* IE11 */
@@ -570,12 +571,15 @@ window.toggleModoTV = function() {
     }
 };
 
-// Listener para ajustar CSS quando entrar/sair do Fullscreen
-document.addEventListener('fullscreenchange', () => {
+// Listener para ajustar redimensionamento dos gráficos quando entrar/sair do Fullscreen
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+
+function handleFullscreenChange() {
     const container = document.getElementById("containerDashboardTV");
     const btnSair = document.getElementById("btnSairTV");
     
-    if (document.fullscreenElement) {
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
         container.classList.add("tv-mode-active");
         if (btnSair) btnSair.classList.remove("hidden");
     } else {
@@ -583,21 +587,88 @@ document.addEventListener('fullscreenchange', () => {
         if (btnSair) btnSair.classList.add("hidden");
     }
     
-    // Aguardar transição de CSS e forçar redimensionamento dos gráficos para ocuparem o espaço da TV
+    // Aguardar transição de CSS e forçar redimensionamento dos gráficos
     setTimeout(() => {
         if(graficoStatus) graficoStatus.resize();
         if(graficoArea) graficoArea.resize();
         if(graficoEvolucao) graficoEvolucao.resize();
         if(graficoAtendimento) graficoAtendimento.resize();
-    }, 200);
-});
+    }, 300);
+}
 
-// 2. Renderização com Rótulos de Dados
+// 2. Preencher Filtro de Mês Dinamicamente
+function popularFiltroMesPcp() {
+    const select = document.getElementById("filtroMesPcp");
+    if (!select || filtroMesPcpJaPreenchido) return;
+
+    const mesesNomes = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const mesesSet = new Set();
+
+    solicitacoes.forEach(item => {
+        if (item.dataSolicitacao && item.dataSolicitacao !== "-") {
+            const parts = item.dataSolicitacao.split('/');
+            if (parts.length === 3) mesesSet.add(`${parts[1]}/${parts[2]}`);
+        }
+        if (item.logAuditoria) {
+            const match = item.logAuditoria.match(/em (\d{2})\/(\d{2})\/(\d{4})/);
+            if (match) mesesSet.add(`${match[2]}/${match[3]}`);
+        }
+        if (item.dataAtendimento && item.dataAtendimento !== "-") {
+            const parts = item.dataAtendimento.split('/');
+            if (parts.length === 3) mesesSet.add(`${parts[1]}/${parts[2]}`);
+        }
+    });
+
+    // Guardar o valor selecionado se já existir (para não perder ao recarregar a tela global)
+    const valorAtual = select.value;
+    select.innerHTML = '<option value="">Todos os Meses</option>';
+
+    Array.from(mesesSet).sort((a,b) => {
+        const [mA, yA] = a.split('/');
+        const [mB, yB] = b.split('/');
+        return yA !== yB ? yB - yA : mB - mA;
+    }).forEach(mesAno => {
+        const [m, y] = mesAno.split('/');
+        const nomeMes = mesesNomes[parseInt(m) - 1];
+        const option = document.createElement("option");
+        option.value = mesAno; // "MM/YYYY"
+        option.textContent = `${nomeMes}/${y}`;
+        select.appendChild(option);
+    });
+
+    if (Array.from(mesesSet).includes(valorAtual)) {
+        select.value = valorAtual;
+    }
+    filtroMesPcpJaPreenchido = true;
+}
+
+// 3. Renderização do Dashboard com Filtro e Rótulos de Dados
 function renderizarIndicadoresPcp() {
+    popularFiltroMesPcp();
+    
+    const filtroMes = document.getElementById("filtroMesPcp").value;
     const hojeStr = new Date().toLocaleDateString("pt-BR");
     
+    // Filtrar os dados pelo mês selecionado
+    let dadosFiltrados = solicitacoes;
+    if (filtroMes) {
+        dadosFiltrados = solicitacoes.filter(item => {
+            let inMonth = false;
+            if (item.dataSolicitacao && item.dataSolicitacao.includes(`/${filtroMes}`)) inMonth = true;
+            if (item.logAuditoria && item.logAuditoria.includes(`/${filtroMes}`)) inMonth = true;
+            if (item.dataAtendimento && item.dataAtendimento.includes(`/${filtroMes}`)) inMonth = true;
+            return inMonth;
+        });
+    }
+
+    // Atualizar Título do KPI 1 dependendo se tem filtro ou não
+    const tituloKpiAtendimento = document.getElementById("tituloKpiAtendimento");
+    if (tituloKpiAtendimento) {
+        tituloKpiAtendimento.innerText = filtroMes ? "Total Atendimentos (Período)" : "Taxa Atendimento Diário (Hoje)";
+    }
+
     // Contadores
-    let atendimentosHoje = 0;
+    let atendimentosPcp = 0;
     const contagemStatus = { "PENDENTE": 0, "AGUARDANDO SUPRIMENTOS": 0, "AGUARDANDO COMERCIAL": 0, "PROGRAMADO": 0 };
     let dec = { pendente: 0, andamento: 0, concluido: 0 };
     let mon = { pendente: 0, andamento: 0, concluido: 0 };
@@ -606,20 +677,24 @@ function renderizarIndicadoresPcp() {
     const historicoNovas = {}; 
     const historicoAtendimento = {};
 
-    solicitacoes.forEach(item => {
+    dadosFiltrados.forEach(item => {
+        // Taxa de Atendimento
         if (item.logAuditoria) {
             const match = item.logAuditoria.match(/em (\d{2}\/\d{2}\/\d{4})/);
             if(match) {
                 let dataLog = match[1];
                 historicoAtendimento[dataLog] = (historicoAtendimento[dataLog] || 0) + 1;
-                if(dataLog === hojeStr) atendimentosHoje++;
+                if (!filtroMes && dataLog === hojeStr) atendimentosPcp++;
+                else if (filtroMes) atendimentosPcp++; // Se houver filtro, soma todos os atendimentos do mês
             }
         }
 
+        // Distribuição de Status
         const st = item.status || "PENDENTE";
         if (contagemStatus[st] !== undefined) contagemStatus[st]++;
         else contagemStatus[st] = 1;
 
+        // Volume por Área de Produção
         if (item.areaPcp === "Decoração") {
             if (st === "PENDENTE") dec.pendente++;
             else if (st === "PROGRAMADO") dec.concluido++;
@@ -630,12 +705,13 @@ function renderizarIndicadoresPcp() {
             else mon.andamento++;
         }
 
+        // Evolução Diária (Entrada)
         if (item.dataSolicitacao && item.dataSolicitacao !== "-") {
             historicoNovas[item.dataSolicitacao] = (historicoNovas[item.dataSolicitacao] || 0) + 1;
         }
     });
 
-    document.getElementById("kpiPcpHoje").innerText = atendimentosHoje;
+    document.getElementById("kpiPcpHoje").innerText = atendimentosPcp;
     document.getElementById("kpiDecPendente").innerText = `${dec.pendente} / ${dec.andamento}`;
     document.getElementById("kpiMonPendente").innerText = `${mon.pendente} / ${mon.andamento}`;
 
@@ -656,7 +732,7 @@ function renderizarIndicadoresPcp() {
             }]
         },
         options: { 
-            responsive: true, maintainAspectRatio: false, layout: { padding: 10 },
+            responsive: true, maintainAspectRatio: false, layout: { padding: 20 },
             plugins: { 
                 legend: { position: 'right' }, 
                 title: { display: true, text: 'Status Global de Solicitações' },
@@ -669,7 +745,9 @@ function renderizarIndicadoresPcp() {
                         let sum = 0;
                         ctx.chart.data.datasets[0].data.forEach(data => sum += data);
                         let percentage = (value * 100 / sum).toFixed(1) + "%";
-                        return `${value}\n(${percentage})`;
+                        let label = ctx.chart.data.labels[ctx.dataIndex];
+                        return `${label}
+${value} (${percentage})`;
                     }
                 }
             } 
@@ -722,9 +800,10 @@ function renderizarIndicadoresPcp() {
             }]
         },
         options: { 
-            responsive: true, maintainAspectRatio: false, layout: { padding: { top: 20 } },
+            responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } },
+            scales: { y: { suggestedMin: 0 } },
             plugins: { 
-                title: { display: true, text: 'Evolução Diária (Últimos Dias)' },
+                title: { display: true, text: 'Evolução Diária (Últimos Dias da Seleção)' },
                 datalabels: {
                     color: '#6366f1',
                     font: { weight: 'bold', size: 12 },
@@ -754,7 +833,8 @@ function renderizarIndicadoresPcp() {
             }]
         },
         options: { 
-            responsive: true, maintainAspectRatio: false, layout: { padding: { top: 20 } },
+            responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } },
+            scales: { y: { suggestedMin: 0 } },
             plugins: { 
                 title: { display: true, text: 'Produtividade de Retornos PCP (Resoluções)' },
                 datalabels: {
@@ -860,3 +940,4 @@ window.mudarAbaVendedor = mudarAbaVendedor;
 window.renderMonitoramentoVendedor = renderMonitoramentoVendedor;
 
 window.renderizarIndicadoresPcp = renderizarIndicadoresPcp;
+window.toggleModoTV = toggleModoTV;
