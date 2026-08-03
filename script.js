@@ -23,6 +23,7 @@ let graficoStatus = null;
 let graficoArea = null;
 let graficoEvolucao = null;
 let graficoAtendimento = null;
+let graficoTopVendedores = null;
 let filtroMesPcpJaPreenchido = false;
 
 function carregarSelectVendedores() {
@@ -546,7 +547,7 @@ async function salvarResposta() {
 }
 
 /* ==========================================================================
-   NOVA FUNCIONALIDADE: INDICADORES PCP COM RÓTULOS, FILTRO MÊS E MODO TV
+   INDICADORES PCP COM RÓTULOS, FILTRO MÊS, MODO TV E TOP VENDEDORES
    ========================================================================== */
 
 // 1. Função para entrar/sair de Tela Cheia (Modo TV)
@@ -593,6 +594,7 @@ function handleFullscreenChange() {
         if(graficoArea) graficoArea.resize();
         if(graficoEvolucao) graficoEvolucao.resize();
         if(graficoAtendimento) graficoAtendimento.resize();
+        if(graficoTopVendedores) graficoTopVendedores.resize();
     }, 300);
 }
 
@@ -619,7 +621,7 @@ function popularFiltroMesPcp() {
         }
     });
 
-    // Guardar o valor selecionado se já existir (para não perder ao recarregar a tela global)
+    // Guardar o valor selecionado se já existir
     const valorAtual = select.value;
     select.innerHTML = '<option value="">Todos os Meses</option>';
 
@@ -642,7 +644,7 @@ function popularFiltroMesPcp() {
     filtroMesPcpJaPreenchido = true;
 }
 
-// 3. Renderização do Dashboard com Filtro e Rótulos de Dados
+// 3. Renderização do Dashboard
 function renderizarIndicadoresPcp() {
     popularFiltroMesPcp();
     
@@ -661,7 +663,6 @@ function renderizarIndicadoresPcp() {
         });
     }
 
-    // Atualizar Título do KPI 1 dependendo se tem filtro ou não
     const tituloKpiAtendimento = document.getElementById("tituloKpiAtendimento");
     if (tituloKpiAtendimento) {
         tituloKpiAtendimento.innerText = filtroMes ? "Total Atendimentos (Período)" : "Taxa Atendimento Diário (Hoje)";
@@ -676,6 +677,7 @@ function renderizarIndicadoresPcp() {
     // Históricos para gráficos
     const historicoNovas = {}; 
     const historicoAtendimento = {};
+    const contagemVendedores = {}; // Para o novo gráfico de top 10
 
     dadosFiltrados.forEach(item => {
         // Taxa de Atendimento
@@ -685,7 +687,7 @@ function renderizarIndicadoresPcp() {
                 let dataLog = match[1];
                 historicoAtendimento[dataLog] = (historicoAtendimento[dataLog] || 0) + 1;
                 if (!filtroMes && dataLog === hojeStr) atendimentosPcp++;
-                else if (filtroMes) atendimentosPcp++; // Se houver filtro, soma todos os atendimentos do mês
+                else if (filtroMes) atendimentosPcp++;
             }
         }
 
@@ -709,6 +711,11 @@ function renderizarIndicadoresPcp() {
         if (item.dataSolicitacao && item.dataSolicitacao !== "-") {
             historicoNovas[item.dataSolicitacao] = (historicoNovas[item.dataSolicitacao] || 0) + 1;
         }
+
+        // Top 10 Vendedores
+        if (item.vendedor && item.vendedor !== "-") {
+            contagemVendedores[item.vendedor] = (contagemVendedores[item.vendedor] || 0) + 1;
+        }
     });
 
     document.getElementById("kpiPcpHoje").innerText = atendimentosPcp;
@@ -719,6 +726,7 @@ function renderizarIndicadoresPcp() {
     if(graficoArea) graficoArea.destroy();
     if(graficoEvolucao) graficoEvolucao.destroy();
     if(graficoAtendimento) graficoAtendimento.destroy();
+    if(graficoTopVendedores) graficoTopVendedores.destroy();
 
     // 1. Gráfico Rosca (Doughnut) com Rótulo
     const ctxStatus = document.getElementById('chartStatusPcp').getContext('2d');
@@ -816,7 +824,7 @@ ${value} (${percentage})`;
         }
     });
 
-    // 4. Gráfico de Colunas com Rótulo Acima da Barra
+    // 4. Gráfico de Colunas com Rótulo Acima da Barra E REMOÇÃO DA LEGENDA
     const datasAt = Object.keys(historicoAtendimento).sort((a,b) => {
         let pA = a.split('/'); let pB = b.split('/'); 
         return new Date(`${pA[2]}-${pA[1]}-${pA[0]}`) - new Date(`${pB[2]}-${pB[1]}-${pB[0]}`);
@@ -836,6 +844,7 @@ ${value} (${percentage})`;
             responsive: true, maintainAspectRatio: false, layout: { padding: { top: 25 } },
             scales: { y: { suggestedMin: 0 } },
             plugins: { 
+                legend: { display: false }, // AJUSTE 1: Remove o ponto verde (legenda)
                 title: { display: true, text: 'Produtividade de Retornos PCP (Resoluções)' },
                 datalabels: {
                     color: '#14b8a6',
@@ -845,6 +854,46 @@ ${value} (${percentage})`;
                     formatter: (value) => value > 0 ? value : null
                 }
             } 
+        }
+    });
+
+    // 5. NOVO GRÁFICO: Top 10 Solicitações por Vendedor (Barras Horizontais)
+    const topVendedores = Object.entries(contagemVendedores)
+        .sort((a, b) => b[1] - a[1]) // Ordena do maior para o menor
+        .slice(0, 10); // Pega os 10 primeiros
+    
+    const labelsVendedores = topVendedores.map(v => v[0]);
+    const dadosVendedores = topVendedores.map(v => v[1]);
+    
+    const ctxTopVend = document.getElementById('chartTopVendedoresPcp').getContext('2d');
+    graficoTopVendedores = new Chart(ctxTopVend, {
+        type: 'bar',
+        data: {
+            labels: labelsVendedores,
+            datasets: [{
+                label: 'Solicitações', 
+                data: dadosVendedores, 
+                backgroundColor: '#8b5cf6', 
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y', // Define o gráfico como barras horizontais
+            responsive: true, 
+            maintainAspectRatio: false, 
+            layout: { padding: { right: 35 } },
+            scales: { x: { suggestedMin: 0 } },
+            plugins: {
+                legend: { display: false }, // Oculta a legenda desnecessária
+                title: { display: true, text: 'Top 10 Solicitações por Vendedor' },
+                datalabels: {
+                    color: '#8b5cf6',
+                    font: { weight: 'bold', size: 12 },
+                    anchor: 'end',
+                    align: 'right',
+                    formatter: (value) => value > 0 ? value : null
+                }
+            }
         }
     });
 }

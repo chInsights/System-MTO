@@ -396,7 +396,7 @@
                     <div class="header-indicadores" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
                         <div class="section-title" style="margin-bottom: 0; font-size: 20px;">Indicadores e Métricas Gerenciais (PCP)</div>
                         
-                        <!-- NOVOS BOTÕES E FILTRO DE MÊS -->
+                        <!-- FILTRO DE MÊS E BOTÃO MODO TV -->
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <select id="filtroMesPcp" onchange="renderizarIndicadoresPcp()" style="padding: 10px 14px; border-radius: 8px; border: 1px solid #cbd5e1; outline: none; font-size: 13px; font-weight: 600; color: #334155; min-width: 180px; background-color: #fff;">
                                 <option value="">Todos os Meses</option>
@@ -444,6 +444,10 @@
                             </div>
                             <div class="chart-container" style="grid-column: 1 / -1; height: 300px;">
                                 <canvas id="chartAtendimentoPcp"></canvas>
+                            </div>
+                            <!-- NOVO GRÁFICO: TOP 10 VENDEDORES -->
+                            <div class="chart-container" style="grid-column: 1 / -1; height: 350px;">
+                                <canvas id="chartTopVendedoresPcp"></canvas>
                             </div>
                         </div>
 
