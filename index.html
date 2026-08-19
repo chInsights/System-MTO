@@ -97,7 +97,7 @@
                         <i class="fa-solid fa-table-columns"></i> Painel de Controle
                     </button>
                     <!-- ABA INDICADORES (SÓ VISÍVEL PARA PCP) -->
-                    <button id="menuIndicadores" class="hidden id-pcp-view" onclick="abrirPagina('indicadoresPcpPage', this); renderizarIndicadoresPcp();">
+                    <button id="menuIndicadores" class="hidden id-pcp-view" onclick="abrirPagina('indicadoresPcpPage', this); window.renderizarIndicadoresPcp();">
                         <i class="fa-solid fa-chart-pie"></i> Indicadores
                     </button>
                     <button onclick="abrirPagina('exportacoes', this)">
@@ -123,11 +123,16 @@
             </header>
 
             <div class="content">
+                
+                <!-- ========================================================================== -->
+                <!--                   COMPONENTE GLOBAL / VENDEDORES                           -->
+                <!-- ========================================================================== -->
+                
                 <!-- PÁGINA 1: PAINEL DE CONTROLE / SOLICITAÇÕES -->
                 <div class="page active" id="solicitacoes">
                     
                     <div class="cards">
-                        <div class="card active-filter" id="cardTotal" onclick="filtrarPorStatus('TODOS')">
+                        <div class="card active-filter" id="cardTotal" onclick="window.filtrarPorStatus('TODOS')">
                             <div class="card-top">
                                 <div>
                                     <div class="card-title">Total Geral</div>
@@ -137,7 +142,7 @@
                             </div>
                         </div>
 
-                        <div class="card" id="cardPendente" onclick="filtrarPorStatus('PENDENTE')">
+                        <div class="card" id="cardPendente" onclick="window.filtrarPorStatus('PENDENTE')">
                             <div class="card-top">
                                 <div>
                                     <div class="card-title">Pendentes</div>
@@ -147,7 +152,7 @@
                             </div>
                         </div>
 
-                        <div class="card" id="cardAguardandoSup" onclick="filtrarPorStatus('AGUARDANDO SUPRIMENTOS')">
+                        <div class="card" id="cardAguardandoSup" onclick="window.filtrarPorStatus('AGUARDANDO SUPRIMENTOS')">
                             <div class="card-top">
                                 <div>
                                     <div class="card-title">Ag. Suprimentos</div>
@@ -157,7 +162,7 @@
                             </div>
                         </div>
 
-                        <div class="card" id="cardAguardandoCom" onclick="filtrarPorStatus('AGUARDANDO COMERCIAL')">
+                        <div class="card" id="cardAguardandoCom" onclick="window.filtrarPorStatus('AGUARDANDO COMERCIAL')">
                             <div class="card-top">
                                 <div>
                                     <div class="card-title">Ag. Comercial</div>
@@ -167,7 +172,7 @@
                             </div>
                         </div>
 
-                        <div class="card" id="cardProgramado" onclick="filtrarPorStatus('PROGRAMADO')">
+                        <div class="card" id="cardProgramado" onclick="window.filtrarPorStatus('PROGRAMADO')">
                             <div class="card-top">
                                 <div>
                                     <div class="card-title">Programados</div>
@@ -178,6 +183,7 @@
                         </div>
                     </div>
 
+                    <!-- MODAL DO VENDEDOR -->
                     <div class="form-box hidden" id="formSolicitante">
                         
                         <!-- ABAS DE NAVEGAÇÃO DO VENDEDOR -->
@@ -274,14 +280,16 @@
                                     <table class="tabela-itens-provisorios">
                                         <thead>
                                             <tr>
-                                                <th style="width: 40%;">Item (Código)</th>
-                                                <th style="width: 30%;">Quantidade</th>
-                                                <th style="width: 30%;">Pedido</th>
+                                                <th style="width: 25%;">Item (Código)</th>
+                                                <th style="width: 15%;">Quantidade</th>
+                                                <th style="width: 20%;">Pedido</th>
+                                                <th style="width: 20%;">Data Cliente</th>
+                                                <th style="width: 20%;">Data Desejável</th>
                                             </tr>
                                         </thead>
                                         <tbody id="listaItensProvisorios">
                                             <tr>
-                                                <td colspan="3" style="text-align: center; color: #94a3b8; font-style: italic; padding: 14px;">
+                                                <td colspan="5" style="text-align: center; color: #94a3b8; font-style: italic; padding: 14px;">
                                                     Nenhum item adicionado (Dê duplo clique na linha inserida para remover).
                                                 </td>
                                             </tr>
@@ -316,22 +324,24 @@
                             <div class="table-box" style="margin-top: 20px; max-height: 400px;">
                                 <table id="tabelaMonitoramento">
                                     <thead>
+                                        <!-- Cabeçalho reordenado prioritariamente -->
                                         <tr>
-                                            <th>Nº Pedido</th>
-                                            <th>Data Sol.</th>
                                             <th>Cliente</th>
-                                            <th>Produto</th>
+                                            <th>Produto (Cod)</th>
+                                            <th>Nº Pedido</th>
                                             <th>Qtd</th>
                                             <th>Status</th>
-                                            <th>Resp. PCP</th>
                                             <th>Previsão</th>
+                                            <th>Data Sol.</th>
+                                            <th>Resp. PCP</th>
                                             <th>Última Atualização</th>
                                             <th>Obs / Retorno</th>
+                                            <th>ID</th>
                                         </tr>
                                     </thead>
                                     <tbody id="listaMonitoramento">
                                         <tr>
-                                            <td colspan="10" style="text-align: center; color: #94a3b8; font-style: italic; padding: 14px;">
+                                            <td colspan="11" style="text-align: center; color: #94a3b8; font-style: italic; padding: 14px;">
                                                 Selecione um vendedor para monitorar suas solicitações.
                                             </td>
                                         </tr>
@@ -342,25 +352,40 @@
 
                     </div>
 
-                    <div class="actions">
+                    <!-- TABELA PRINCIPAL DE SOLICITAÇÕES -->
+                    <div class="actions" style="flex-wrap: wrap;">
                         <input type="month" id="filtroMes" style="max-width:220px;">
 
                         <button class="send-btn" style="margin-top:0;" onclick="filtrarMes()">FILTRAR</button>
                         <button class="logout" style="width:auto; margin-top:0; background:#64748b;" onclick="limparFiltro()">LIMPAR FILTROS</button>
+                        
+                        <!-- BOTÃO: FLEGAR POR LISTA -->
+                        <button class="send-btn" style="margin-top:0; background:#3b82f6;" onclick="abrirModalFlegarLista()">
+                            <i class="fa-solid fa-list-check"></i> Flegar por Lista
+                        </button>
         
                         <button id="btnRespostaMassa" class="btn-massa hidden" onclick="abrirModalMassa()">
                             <i class="fa-solid fa-layer-group"></i> Responder Selecionados
+                        </button>
+                        
+                        <!-- BOTÃO: EXPORTAR PENDENTES PCP -->
+                        <button id="btnExportarPendentes" class="btn-massa hidden id-pcp-view" style="background:#f59e0b;" onclick="exportarPendentesPcp()">
+                            <i class="fa-solid fa-file-export"></i> Exportar Pendentes
                         </button>
                     </div>
 
                     <div class="table-box">
                         <table id="tabelaMtoHTML">
                             <thead>
+                                <!-- Cabeçalho Reordenado Prioritariamente -->
                                 <tr>
                                     <th class="col-checkbox id-pcp-view hidden">
                                         <input type="checkbox" id="chkSelecionarTodos" class="chk-solicitacao" onclick="toggleSelecionarTodos(this)">
                                     </th>
-                                    <th>ID</th>
+                                    <th>CLIENTE</th>
+                                    <th>COD ITEM (Box)</th>
+                                    <th>Nº PEDIDO</th>
+                                    <th>QTD</th>
                                     <th>TIPO</th>
                                     <th>MERCADO</th>
                                     <th>VENDEDOR</th>
@@ -373,12 +398,9 @@
                                     <th>DATA RETORNO PCP</th>
                                     <th>ÁREA PCP</th>
                                     <th>RESPONSÁVEL PCP</th>
-                                    <th>CLIENTE</th>
-                                    <th>COD ITEM (Box)</th>
-                                    <th>Nº PEDIDO</th>
-                                    <th>QTD</th>
                                     <th>OBSERVAÇÃO / RETORNO</th>
                                     <th>STATUS</th>
+                                    <th>ID</th>
                                     <th>AÇÃO</th>
                                 </tr>
                             </thead>
@@ -391,6 +413,10 @@
                     </div>
                 </div>
 
+                <!-- ========================================================================== -->
+                <!--                       COMPONENTE EXCLUSIVO PCP                             -->
+                <!-- ========================================================================== -->
+                
                 <!-- PÁGINA 2: INDICADORES GERENCIAIS PCP -->
                 <div class="page" id="indicadoresPcpPage">
                     <div class="header-indicadores" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
@@ -446,7 +472,7 @@
                                 <canvas id="chartAtendimentoPcp"></canvas>
                             </div>
                             
-                            <!-- NOVO GRÁFICO: TOP 10 VENDEDORES (Com Filtro Múltiplo Incorporado) -->
+                            <!-- GRÁFICO: TOP 10 VENDEDORES (Com Filtro Múltiplo Incorporado) -->
                             <div class="chart-container" style="grid-column: 1 / -1; display: flex; flex-direction: column; min-height: 380px;">
                                 
                                 <div class="header-top10" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 16px; position: relative; z-index: 20;">
@@ -477,7 +503,7 @@
                     </div>
                 </div>
 
-                <!-- PÁGINA 3: EXPORTAÇÕES -->
+                <!-- PÁGINA 3: EXPORTAÇÕES (PCP e Geral) -->
                 <div class="page" id="exportacoes">
                     <div class="cards">
                         <div class="card">
@@ -506,7 +532,7 @@
         </main>
     </div>
 
-    <!-- MODAL DE RESPOSTA ORIGINAL -->
+    <!-- MODAL DE RESPOSTA PCP -->
     <div class="modal" id="modalResposta">
         <div class="modal-content" id="modalPcpContent">
             <div class="modal-header">
@@ -554,6 +580,34 @@
             </div>
             
             <button class="save-btn" id="btnSalvarResposta" onclick="salvarResposta()">ENVIAR RETORNO</button>
+        </div>
+    </div>
+    
+    <!-- MODAL: FLEGAR POR LISTA -->
+    <div class="modal" id="modalFlegarLista">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">Flegar por Lista</h2>
+                <button type="button" class="btn-fechar-modal" onclick="fecharModalFlegarLista()">&times;</button>
+            </div>
+            <div id="flegarInputArea">
+                <p style="font-size: 13px; color: #475569; margin-bottom: 8px;">Cole abaixo os códigos dos itens copiados do Excel (um por linha):</p>
+                <textarea id="textoFlegarLista" style="height: 150px; margin-bottom: 12px; width: 100%; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px; font-size: 13px;" placeholder="Ex:
+76510201790454
+76170201438477..."></textarea>
+                <div style="display: flex; gap: 10px;">
+                    <button class="save-btn" style="margin-top:0; flex: 1; background: #0284c7;" onclick="processarFlegarLista()">Selecionar Itens</button>
+                    <button class="logout" style="width:auto; margin-top:0; background:#94a3b8; flex: 1;" onclick="fecharModalFlegarLista()">Cancelar</button>
+                </div>
+            </div>
+            <div id="flegarResultArea" class="hidden">
+                <h3 style="font-size: 15px; margin-bottom: 10px;">Resultado da seleção</h3>
+                <p id="flegarResTotal" style="font-size: 13px; color: #334155;"></p>
+                <p id="flegarResEncontrados" style="font-size: 13px; color: #16a34a; font-weight: bold; margin-top: 4px;"></p>
+                <p id="flegarResNaoEncontrados" style="font-size: 13px; color: #ef4444; font-weight: bold; margin-top: 4px;"></p>
+                <div id="flegarListaNaoEncontrados" style="margin-top: 10px; max-height: 120px; overflow-y: auto; font-size: 11px; color: #ef4444; background: #fef2f2; padding: 8px; border-radius: 4px;"></div>
+                <button class="save-btn" style="margin-top:16px; background: #64748b; width: 100%;" onclick="fecharModalFlegarLista()">Fechar e Visualizar</button>
+            </div>
         </div>
     </div>
 
