@@ -37,7 +37,7 @@ export const listaVendedores = [
 "ROSANGELA PAULINO",
 "RUBENS PINTOR",
 "SANDRA JARDIM",
-"THALES SALAZAR",
+"VICTOR CAMILO",
 "VAGNA QUEIROZ",
     // Adicione os seus 39 vendedores aqui...
 ];
